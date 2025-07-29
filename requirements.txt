@@ -6,3 +6,4 @@ requests
 newspaper3k
 google-api-python-client
 notion-client
+lxml==4.6.5
