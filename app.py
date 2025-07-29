@@ -110,8 +110,8 @@ def process_event():
 
 
 if __name__ == "__main__":
-    t = threading.Thread(target=process_event)
-    t.start()
-    # 部署階段應開啟debug=True
-    app.run(host="0.0.0.0", port=8080)
+    import os
+    threading.Thread(target=process_event, daemon=True).start()
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
     
