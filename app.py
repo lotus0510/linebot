@@ -144,6 +144,9 @@ def process_event():
             data_dict = process.data_dict
             print("-" * 50)
             print(f"處理用戶 {data_dict.get('user_id', 'unknown')} 的消息")
+            print(f"消息類型: {data_dict.get('type', 'unknown')}")
+            print(f"原始內容長度: {len(data_dict.get('original_value', ''))}")
+            print(f"提示詞是否生成: {'prompt' in data_dict}")
             
             # AI 處理
             try:

@@ -181,13 +181,17 @@ class ProcessText():
             "message": event.message.text,
         }
         
+        print(f"收到消息: {event.message.text}")
+        
         if self.re_text(event.message.text):
+            print("識別為 URL 類型")
             self.type_url()
         else:
-            # 待處理
+            print("識別為摘要類型")
             self.type_summary()
-            pass
+        
         self.process_prompt()
+        print(f"最終 prompt: {self.data_dict.get('prompt', 'None')[:100]}...")
         
         
     
@@ -256,10 +260,10 @@ class ProcessText():
             return None
         
     def text_summary(self):
-        # 待處理
+        """處理文字摘要類型的資料"""
         self.data_dict["type"] = "summary"
         self.data_dict["original_value"] = self.data_dict["message"]
-        pass
+        print(f"設置摘要類型，原始內容: {self.data_dict['original_value'][:50]}...")
     
     
     
@@ -267,22 +271,32 @@ class ProcessText():
     def process_prompt(self):
         """處理提示詞生成，使用全局 data 變數"""
         try:
-            if self.data_dict["type"] == "url":
+            message_type = self.data_dict.get("type", "summary")
+            print(f"處理提示詞，消息類型: {message_type}")
+            
+            if message_type == "url":
                 print("提取url提示詞中")
                 prompt = data["prompt"]["url"]
-                self.data_dict["prompt"] = prompt + self.data_dict["original_value"]
-            elif self.data_dict["type"] == "summary":
+                original_value = self.data_dict.get("original_value", "")
+                self.data_dict["prompt"] = prompt + original_value
+            elif message_type == "summary":
                 print("提取摘要提示詞中")
                 prompt = data["prompt"]["summary"]
-                self.data_dict["prompt"] = prompt + self.data_dict["original_value"]
+                original_value = self.data_dict.get("original_value", self.data_dict["message"])
+                self.data_dict["prompt"] = prompt + original_value
             else:
                 print("未知的消息類型，使用默認摘要處理")
                 prompt = data["prompt"]["summary"]
-                self.data_dict["prompt"] = prompt + self.data_dict.get("original_value", self.data_dict["message"])
+                original_value = self.data_dict.get("original_value", self.data_dict["message"])
+                self.data_dict["prompt"] = prompt + original_value
+                
+            print(f"生成的提示詞長度: {len(self.data_dict['prompt'])}")
         except Exception as e:
             print(f"提示詞處理錯誤: {e}")
             # 使用默認提示詞
-            self.data_dict["prompt"] = "請幫我整理以下內容：\n" + self.data_dict.get("original_value", self.data_dict["message"])
+            fallback_content = self.data_dict.get("original_value", self.data_dict.get("message", "無內容"))
+            self.data_dict["prompt"] = "請幫我整理以下內容：\n" + fallback_content
+            print(f"使用默認提示詞，長度: {len(self.data_dict['prompt'])}")
 
 def basic_info():
     """
