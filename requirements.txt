@@ -1,6 +1,6 @@
 Flask
 python-dotenv
-line-bot-sdk-v3
+line-bot-sdk
 requests
 newspaper3k
 google-api-python-client
