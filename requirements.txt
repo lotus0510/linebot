@@ -7,4 +7,4 @@ requests==2.31.0
 newspaper3k==0.2.8
 nltk==3.8.1
 lxml==4.9.3
-gunicorn
+gunicorn==21.2.0

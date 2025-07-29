@@ -42,11 +42,15 @@ jobs:
           --platform managed \
           --region ${{ env.REGION }} \
           --allow-unauthenticated \
-          --memory 1Gi \
-          --cpu 1 \
-          --timeout 300 \
+          --memory 2Gi \
+          --cpu 2 \
+          --timeout 900 \
+          --concurrency 80 \
+          --max-instances 10 \
+          --min-instances 1 \
           --set-env-vars LINE_CHANNEL_ACCESS_TOKEN=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }} \
           --set-env-vars LINE_CHANNEL_SECRET=${{ secrets.LINE_CHANNEL_SECRET }} \
           --set-env-vars gemini_api=${{ secrets.GEMINI_API }} \
           --set-env-vars notion_api=${{ secrets.NOTION_API }} \
-          --set-env-vars notion_id=${{ secrets.NOTION_ID }}
+          --set-env-vars notion_id=${{ secrets.NOTION_ID }} \
+          --port 8080
