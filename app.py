@@ -110,7 +110,7 @@ def process_event():
 
 
 if __name__ == "__main__":
-    # import os
-    threading.Thread(target=process_event, daemon=True).start()
-    # app.run(host="0.0.0.0", port=5000)
+    import os
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
     
