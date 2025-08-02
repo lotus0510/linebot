@@ -1,49 +1,115 @@
 from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
-
+from linebot.v3 import WebhookHandler
+from linebot.v3.exceptions import InvalidSignatureError
+from linebot.v3.messaging import (
+    Configuration,
+    ApiClient,
+    MessagingApi,
+    ReplyMessageRequest,
+    TextMessage,
+)
+from linebot.v3.webhooks import (
+    MessageEvent,
+    TextMessageContent
+)
+from server import timeit
 import server
-import time
-app = Flask(__name__)
+import firebase
+
+import os, time,json
+import dotenv
+dotenv.load_dotenv()
+
+gemini = server.Gemini()
 process_text = server.ProcessText()
+notion = server.NotionSDK()
 
 
-# 你的 LINE CHANNEL ACCESS TOKEN 和 CHANNEL SECRET
-LINE_CHANNEL_ACCESS_TOKEN = '你的 Channel Access Token'
-LINE_CHANNEL_SECRET = '你的 Channel Secret'
+app = Flask(__name__)
 
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
-handler = WebhookHandler(LINE_CHANNEL_SECRET)
+# LINE Channel 配置
+CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
+CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET')
+
+# 初始化 LINE Bot API
+configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(CHANNEL_SECRET)
+
+line_bot_api = MessagingApi(ApiClient(configuration))
+
+
 
 @app.route("/callback", methods=['POST'])
 def callback():
-    t0 = time.time()
-    
+    # 取得 X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
+
+    # 取得 request body
     body = request.get_data(as_text=True)
 
+    # 處理 webhook body
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
+        app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
         abort(400)
-        
-    t1 = time.time()
-    print(f"Request processed in {t1 - t0:.2f} seconds")
+
     return 'OK'
 
-# 簡單的 message event 處理
-@handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
+@handler.add(MessageEvent, message=TextMessageContent)
+@timeit
+def handle_message(event,destination = None):
+    
+    if firebase.is_saved(event.message.id):
+        print("-"*100)
+        print("╰(*°▽°*)╯訊息已經處理過，跳過。")
+        return
+    else:
+        firebase.save_message_id(event.message.id)
+        print("-"*100)
+        print("╰(*°▽°*)╯處理新的訊息-寫入db。")
+        
     
     process_text.classify(event)
     
+    print("ai分析中")
+    try:
+        res =gemini.gemini(process_text.data_dict["prompt"])
+        res_json = json.loads(res)
+    except Exception as e:
+        print(f"❌ ai 出錯 \n{e}")
+        return
+    try:
+        notion.notion_start(name=res_json["title"],tag=res_json["tag"],content=res_json["content"])
+        line_bot_api.reply_message_with_http_info(
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[
+                    TextMessage(text="寫入notion成功")
+                ]
+            )
+        )
+        
+
+    except Exception as e:
+        print(f"❌ 寫入notion出錯 \n{e}")
+        line_bot_api.reply_message_with_http_info(
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[
+                    TextMessage(text="寫入notion出錯，請稍後再試")
+                ]
+            )
+        )
+
     
     
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=event.message.text)
-    )
+    
+    
+    
+    
+    
+    
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080)
+    app.run(debug=True, port=8080)
