@@ -1,0 +1,19 @@
+# 避免備份、打包不必要的東西
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 開發依賴
+.venv/
+.idea/
+.vscode/
+
+# Git 相關
+.git/
+.gitignore
+
+# 測試與範例
+test.py
+free-tools-*.json
+README.md

@@ -1,9 +1,14 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
+import  os 
+import dotenv
+dotenv.load_dotenv()
 
-
-cred = credentials.Certificate("free-tools-466817-firebase-adminsdk-fbsvc-c77929d905.json")
-firebase_admin.initialize_app(cred)
+if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+    cred = credentials.Certificate("free-tools-466817-firebase-adminsdk-fbsvc-c77929d905.json")
+    firebase_admin.initialize_app(cred)
+else:
+    firebase_admin.initialize_app()
 
 db = firestore.client()
 

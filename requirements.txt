@@ -3,10 +3,11 @@ line-bot-sdk==3.17.1
 python-dotenv==1.1.1
 google-genai==1.28.0
 notion-client==2.4.0
-requests==2.31.0
 newspaper3k==0.2.8
-nltk==3.9.2
 lxml==6.0.0
-gunicorn==23.0.0
 firebase-admin==7.1.0
-cloudscraper==1.2.71
+gunicorn==23.0.0
+
+# ✅ 修正版：requests 版本符合 line-bot-sdk 要求，範圍寫法比較安全
+requests>=2.32.3,<3.0
+lxml_html_clean
