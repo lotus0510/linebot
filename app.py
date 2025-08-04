@@ -70,14 +70,16 @@ def handle_message(event,destination = None):
         print("╰(*°▽°*)╯處理新的訊息-寫入db。")
         
     
-    process_text.classify(event)
     
-    print("ai分析中")
     try:
+        process_text.classify(event)
+        print("ai分析中")
         res =gemini.gemini(process_text.data_dict["prompt"])
         res_json = json.loads(res)
+        text = "寫入notion成功"
     except Exception as e:
         print(f"❌ ai 出錯 \n{e}")
+        text = "ai 出錯，請稍後再試"
         return
     try:
         notion.notion_start(name=res_json["title"],tag=res_json["tag"],content=res_json["content"])
@@ -85,22 +87,21 @@ def handle_message(event,destination = None):
             ReplyMessageRequest(
                 reply_token=event.reply_token,
                 messages=[
-                    TextMessage(text="寫入notion成功")
+                    TextMessage(text=text)
                 ]
             )
         )
-        
-
     except Exception as e:
         print(f"❌ 寫入notion出錯 \n{e}")
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
                 messages=[
-                    TextMessage(text="寫入notion出錯，請稍後再試")
+                    TextMessage(text=text)
                 ]
             )
         )
+    return 'OK' 
 
     
     
