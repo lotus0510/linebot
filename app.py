@@ -73,7 +73,7 @@ def handle_message(event,destination = None):
         logging.info("╰(*°▽°*)╯訊息未存在於db中，開始處理。")
         
         if process_text.home(event):
-            jres = process_text.data_dict
+            jres = process_text.data_dict["ai_response"]
             logging.info(f"處理後的資料: {jres}")
             try:
                 notion.notion_start(name=jres["title"], tag=jres["tag"], content=jres["content"])
