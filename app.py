@@ -80,7 +80,8 @@ def handle_message(event,destination = None):
                 logging.info("已將資料寫入Notion")
                 reply = "成功寫入json"
             except Exception as e:
-                logging.info(f"❌ 寫入notion出錯 \n{e}")
+                logging.error(f"❌寫入Notion失敗: {e}")
+                logging.info(f'data:\n {jres}')
                 reply = "寫入Notion失敗。"
             finally:
                 logging.info("開始回覆訊息")

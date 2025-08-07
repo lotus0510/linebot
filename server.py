@@ -194,7 +194,7 @@ class ProcessText():
             pt =self.process_prompt()
             fpt =pt+self.data_dict["message_text"]
             logging.info("獲得json格式回應中")
-            self.data_dict["ai_response"] = gm.gemini(prompt=fpt)
+            self.data_dict["ai_response"] = json.loads(gm.gemini(prompt=fpt))
             return True
 
         elif classify == "other":
