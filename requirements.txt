@@ -9,4 +9,3 @@ gunicorn==23.0.0
 
 # ✅ 修正版：requests 版本符合 line-bot-sdk 要求，範圍寫法比較安全
 requests>=2.32.3,<3.0
-lxml_html_clean

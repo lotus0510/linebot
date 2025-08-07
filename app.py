@@ -14,9 +14,8 @@ from linebot.v3.webhooks import (
 )
 from server import timeit
 import server
-import firebase
 import logging
-import os, time,json
+import os
 import dotenv
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -65,47 +64,40 @@ def callback():
 @timeit
 def handle_message(event,destination = None):
     
-    if firebase.is_saved(event.message.id):
-        logging.info("╰(*°▽°*)╯訊息已存在於db中，跳過處理。")
-        return
-    else:
-        firebase.save_message_id(event.message.id)
-        logging.info("╰(*°▽°*)╯訊息未存在於db中，開始處理。")
-        
-        if process_text.home(event):
-            jres = process_text.data_dict["ai_response"]
-            logging.info(f"處理後的資料: {jres}")
-            try:
-                notion.notion_start(name=jres["title"], tag=jres["tag"], content=jres["content"])
-                logging.info("已將資料寫入Notion")
-                reply = "成功寫入notion"
-            except Exception as e:
-                logging.error(f"❌寫入Notion失敗: {e}")
-                logging.info(f'data:\n {jres}')
-                reply = "寫入Notion失敗。"
-            finally:
-                logging.info("開始回覆訊息")
-                line_bot_api.reply_message_with_http_info(
-                    ReplyMessageRequest(
-                        reply_token=event.reply_token,
-                        messages=[
-                            TextMessage(text=reply)
-                        ]
-                    )
-                )
-        else:
-            line_bot_api.reply_message_with_http_info(
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,
-                    messages=[
-                        TextMessage(text="這不是文章，無法處理。")
-                    ]
-                )
+    
+    
+    
+    
+    try:
+        if server.firebase_check(event.message.id):
+            logging.info("╰(*°▽°*)╯訊息已存在於db中，跳過處理。")
+            return "OK"
+        is_article = process_text.home(event)
+        if is_article:
+            logging.info("將資料儲存到notion中")
+            notion.notion_start(
+                name=process_text.data_dict["ai_response"]["title"],
+                tag=process_text.data_dict["ai_response"]["tag"],
+                content=process_text.data_dict["ai_response"]["content"]
             )
-            # todo 暫不處理
-            pass
+            reply_msg = "已將資料寫入Notion。"        
+        else:
+            logging.info("這不是文章，無法處理。")
+            reply_msg = "這不是文章"
+            
+    except Exception as e:
+        logging.error(f"發生錯誤: {e}", exc_info=True)
+        reply_msg = "發生錯誤請檢查cloud run"
+    line_bot_api.reply_message_with_http_info(
+        ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[
+                TextMessage(text=reply_msg)
+            ]
+        )
 
-    return 'OK' 
+    )
+    return "OK"
 
     
     

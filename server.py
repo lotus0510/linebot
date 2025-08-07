@@ -3,7 +3,7 @@ from google import genai
 from google.genai.types import GenerateContentConfig
 from pydantic import BaseModel, Field
 import logging
-
+import firebase
 
 from notion_client import Client
 import datetime
@@ -193,7 +193,7 @@ class ProcessText():
             logging.info("處理提示詞中")
             pt =self.process_prompt()
             fpt =pt+self.data_dict["message_text"]
-            logging.info("獲得json格式回應中")
+            logging.info("AI生成,獲得json格式回應中")
             self.data_dict["ai_response"] = json.loads(gm.gemini(prompt=fpt))
             return True
 
@@ -233,7 +233,20 @@ class ProcessText():
             # TODO 暫不處理
             pass
     
-    
+def firebase_check(message_id) -> bool:
+    """
+    確認message_id是否存在
+    如果存在，則返回True 後續直接return
+    如果不存在，則將message_id儲存到firebase 後續進行處理
+    """
+    if firebase.is_saved(message_id):
+        logging.info("message_id已存在")
+        return True
+    else:
+        firebase.save_message_id(message_id)
+        logging.info("message_id不存在，開始處理")
+        return False
+
 
     
 
