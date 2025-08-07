@@ -15,14 +15,19 @@ from linebot.v3.webhooks import (
 from server import timeit
 import server
 import firebase
-
+import logging
 import os, time,json
 import dotenv
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 dotenv.load_dotenv()
 
 gemini = server.Gemini()
 process_text = server.ProcessText()
 notion = server.NotionSDK()
+
+
 
 
 app = Flask(__name__)
@@ -61,46 +66,44 @@ def callback():
 def handle_message(event,destination = None):
     
     if firebase.is_saved(event.message.id):
-        print("-"*100)
-        print("╰(*°▽°*)╯訊息已經處理過，跳過。")
+        logging.info("╰(*°▽°*)╯訊息已存在於db中，跳過處理。")
         return
     else:
         firebase.save_message_id(event.message.id)
-        print("-"*100)
-        print("╰(*°▽°*)╯處理新的訊息-寫入db。")
+        logging.info("╰(*°▽°*)╯訊息未存在於db中，開始處理。")
         
-    
-    
-    try:
-        process_text.classify(event)
-        print("ai分析中")
-        res =gemini.gemini(process_text.data_dict["prompt"])
-        res_json = json.loads(res)
-        text = "寫入notion成功"
-    except Exception as e:
-        print(f"❌ ai 出錯 \n{e}")
-        text = "ai 出錯，請稍後再試"
-        return
-    try:
-        notion.notion_start(name=res_json["title"],tag=res_json["tag"],content=res_json["content"])
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[
-                    TextMessage(text=text)
-                ]
+        if process_text.home(event):
+            jres = process_text.data_dict
+            logging.info(f"處理後的資料: {jres}")
+            try:
+                notion.notion_start(name=jres["title"], tag=jres["tag"], content=jres["content"])
+                logging.info("已將資料寫入Notion")
+                reply = "成功寫入json"
+            except Exception as e:
+                logging.info(f"❌ 寫入notion出錯 \n{e}")
+                reply = "寫入Notion失敗。"
+            finally:
+                logging.info("開始回覆訊息")
+                line_bot_api.reply_message_with_http_info(
+                    ReplyMessageRequest(
+                        reply_token=event.reply_token,
+                        messages=[
+                            TextMessage(text=reply)
+                        ]
+                    )
+                )
+        else:
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[
+                        TextMessage(text="這不是文章，無法處理。")
+                    ]
+                )
             )
-        )
-    except Exception as e:
-        print(f"❌ 寫入notion出錯 \n{e}")
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[
-                    TextMessage(text=text)
-                ]
-            )
-        )
+            # todo 暫不處理
+            pass
+
     return 'OK' 
 
     
