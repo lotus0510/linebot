@@ -4,7 +4,7 @@
     "prompt":{
         "url":"將以下文章作摘要,不要回答其他任何東西 \n",
         "summary":"幫我將文章做摘要整理: \n",
-        "format": "以json格式回傳(請注意不要有雙引號\"\") 回傳內容包含title(文章名稱) tag(為文章進行分類) content(摘要文章內容)，不要有多餘內容,不要用md格式(```json!!!), {title': 'value','tag': [{'name': 'value'},{'name': 'value'},{'name': 'value'}],'content': 'value'}",
+        "format": "以json格式回傳(請注意json是使用雙引號\"\") 回傳內容包含title(文章名稱) tag(為文章進行分類) content(摘要文章內容)，不要有多餘內容,不要用md格式(```json!!!), {title': 'value','tag': [{'name': 'value'},{'name': 'value'},{'name': 'value'}],'content': 'value'}",
         "system_classify":"請判斷以下訊息屬於那一類型[文章,普通閒聊],並僅回傳[article,other]其中一個類型,不要有多餘內容"
     }
 
