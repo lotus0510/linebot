@@ -78,7 +78,7 @@ def handle_message(event,destination = None):
             try:
                 notion.notion_start(name=jres["title"], tag=jres["tag"], content=jres["content"])
                 logging.info("已將資料寫入Notion")
-                reply = "成功寫入json"
+                reply = "成功寫入notion"
             except Exception as e:
                 logging.error(f"❌寫入Notion失敗: {e}")
                 logging.info(f'data:\n {jres}')
